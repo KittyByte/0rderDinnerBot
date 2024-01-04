@@ -195,9 +195,7 @@ async def handle_admin_add(message: Message, state: FSMContext):
 
 
 async def handle_admin_remove(message: Message, state: FSMContext):
-    if message.text == '670076879' or message.text == '917861412':
-        await message.reply(f'Бога удалить нельзя', reply_markup=del_kb)
-    elif db.remove_admin(message.text):
+    if db.remove_admin(message.text):
         await message.reply(f'ID {message.text} убран из админов', reply_markup=del_kb)
     else:
         await message.reply('Неверно введен ID или такого админа нет', reply_markup=del_kb)
