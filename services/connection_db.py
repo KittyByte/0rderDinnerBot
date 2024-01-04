@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from loader import dinners_sets, logging
+from loader import dinner_sets, logging
 
 path = Path(__file__).parent / 'DinnerDB.json'
 
@@ -34,7 +34,7 @@ class DBConnect:
             self.__save()
             return True
         except Exception as err:
-            logging.warning(f'add_admin - {err}')
+            logging.warning(f'{err}')
             return False
 
     def get_admins(self) -> list[int]:
@@ -49,7 +49,7 @@ class DBConnect:
             self.__save()
             return True
         except Exception as err:
-            logging.warning(f'remove_admin - {err}')
+            logging.warning(f'{err}')
             return False
 
     def add_user(self, tg_id, tg_username: str, tg_name: str):
@@ -61,7 +61,7 @@ class DBConnect:
             self.__save()
             return True
         except Exception as err:
-            logging.warning(f'add_user - {err}')
+            logging.warning(f'{err}')
             return False
 
     def remove_user(self, tg_id):
@@ -72,7 +72,7 @@ class DBConnect:
             self.__save()
             return True
         except Exception as err:
-            logging.warning(f'remove_user - {err}')
+            logging.warning(f'{err}')
             return False
 
     def get_users(self) -> dict[str:list]:
@@ -88,7 +88,7 @@ class DBConnect:
             self.__save()
             return True
         except Exception as err:
-            logging.warning(f'set_meal - {err}')
+            logging.warning(f'{err}')
             return False
 
     def del_my_meal(self, tg_id):
@@ -100,7 +100,7 @@ class DBConnect:
             self.__save()
             return True
         except Exception as err:
-            logging.warning(f'del_my_meal - {err}')
+            logging.warning(f'{err}')
             return False
 
     def reset_meals(self):
@@ -113,16 +113,20 @@ class DBConnect:
         """ Возвращает строку: имя - все его заказы """
         users = self.db['users'].values()
         result = ''
-        for _, name, lst_meals in users:
-            if lst_meals:
-                meals = ''
-                for meal in lst_meals:
-                    if (count := lst_meals.count(meal)) > 1 and meal not in meals:
-                        meals += f"{meal} x{count}, "
-                    elif meal not in meals:
-                        meals += meal + ', '
-                result += f"{name} - [{meals.strip(', ')}]\n"
-        return result
+        try:
+            for _, name, lst_meals in users:
+                if lst_meals:
+                    meals = ''
+                    for meal in lst_meals:
+                        if (count := lst_meals.count(meal)) > 1 and meal not in meals:
+                            meals += f"{meal} x{count}, "
+                        elif meal not in meals:
+                            meals += meal + ', '
+                    result += f"<i><b>{name}</b></i> - [{meals.strip(', ')}]\n"
+            return result
+        except Exception as err:
+            logging.warning(f'{err}')
+            return ''
 
     def get_tools(self) -> int:
         """ Возвращает целочисленное число: количество приборов(кол-во пользователей, сделавших заказ) """
@@ -137,7 +141,7 @@ class DBConnect:
         """ Возвращает словарь: блюдо - его количество """
         users = self.db['users'].values()
         dinners_sets_dict = {}
-        for d_set in dinners_sets:
+        for key, d_set in dinner_sets().items():
             dinners_sets_dict[d_set] = 0
             for _, _, lst_meals in users:
                 if d_set in lst_meals:

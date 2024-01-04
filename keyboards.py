@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, ReplyKeyboardMarkup
-from loader import dinners_sets
+from loader import dinner_sets
 
 
 cancel = ReplyKeyboardMarkup(resize_keyboard=True).add('Отменить действие 🚫')
@@ -30,12 +30,13 @@ remove_user_admin.add(*[
 ])
 
 
-inline_dinner_manager = InlineKeyboardMarkup(row_width=2)
+def get_inline_dinner_buttons():
+    inline_dinner_manager = InlineKeyboardMarkup(row_width=2)
+    buttons = [
+        InlineKeyboardButton(value, callback_data=key) for key, value in dinner_sets().items()
+    ]
+    buttons.append(InlineKeyboardButton('Очистить мои заказы', callback_data='clear_my_meal'))
+    inline_dinner_manager.add(*buttons)
 
-buttons = [
-    InlineKeyboardButton(_set, callback_data=_set) for _set in dinners_sets
-]
-
-buttons.append(InlineKeyboardButton('Очистить мои заказы', callback_data='clear_my_meal'))
-inline_dinner_manager.add(*buttons)
+    return inline_dinner_manager
 

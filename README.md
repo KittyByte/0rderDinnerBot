@@ -1,9 +1,12 @@
 <div style="text-align:center;"><h1> 0rderDinnerBot</h1></div>
 <p align="center">
-  <img src="img.png" alt="img.png" width="350">
+  <img src="imgs\img.png" alt="img.png" width="350">
 </p>
 
-> **Это бот, для автоматизации заказа обедов в компании. Он предоставляет удобный способ для участников компании заказывать обеды и получать информацию о выбранных блюдах.**
+> **Это бот, для автоматизации заказа обедов в компании, основной функционал реализовывался для работы с группой @vokrugsveta_26.   
+> Он предоставляет удобный способ для участников компании заказывать обеды и получать информацию о выбранных блюдах.**
+
+> **Авторы: [KittyByte](https://github.com/KittyByte) и [yurikpetro](https://github.com/yurikpetro)**
 
 ## Возможности
 
@@ -26,7 +29,7 @@
 1. Зарегистрируйте бота в Telegram с помощью @BotFather (https://t.me/BotFather) и получите API-токен бота.
 2. Перейдите на Telegram Core API (https://core.telegram.org/api/obtaining_api_id) и зарегистрируйте свое приложение для получения API ID и API Hash.
 3. Установите необходимые зависимости:
-   ```
+   ```sh
    pip install -r requirements.txt
    ```
 4. Настройте config, замените параметры соответствующими вам значениями.
@@ -53,4 +56,11 @@
 7. Запустите бота.
 8. Теперь ваш бот готов для автоматизации заказов обедов в компании!
 
-<div style="text-align:center;"><h1> Удачи с вашим 0rderDinnerBot!</h1></div>
+## Пример работы бота: 
+<p align="center">
+  <img src="imgs\example3.jpg" alt="example2.jpg" width="350">
+  <img src="imgs\example1.jpg" alt="example1.jpg" width="350">
+  <img src="imgs\example2.jpg" alt="example2.jpg" width="350">
+</p>
+
+<div style="text-align:center;"><h1> Удачи с Вашим 0rderDinnerBot!</h1></div>

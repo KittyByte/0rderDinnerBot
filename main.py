@@ -1,5 +1,4 @@
 import asyncio
-
 from threading import Thread
 from loader import dp, logging
 from aiogram import executor
@@ -26,11 +25,10 @@ if __name__ == '__main__':
         bot_thread.daemon = True
         bot_thread.start()
 
-        client.run()
         print('[+] Юзербот успешно запущен')
+        client.run()
         bot_thread.join()
     except Exception as error:
         print(error)
     finally:
         print('\n[+] Пока пока...')
-        exit()

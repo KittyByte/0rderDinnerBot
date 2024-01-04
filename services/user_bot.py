@@ -25,4 +25,4 @@ async def message_photo(client: Client, message):  # передаём в фун�
                 await client.download_media(msg.photo, file_name=f'dinner_2.jpg')
                 logging.info(f'Фото обеда №2 {msg.photo.file_id} (dinner_2.jpg) было сохранено')
 
-client.add_handler(MessageHandler(message_photo, filters=filters.photo))
+client.add_handler(MessageHandler(message_photo, filters=filters.photo & filters.chat(chats=int(CHAT_ID_FOR_PARSING))))

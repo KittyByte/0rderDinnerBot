@@ -1,11 +1,15 @@
 from aiogram.dispatcher import FSMContext
 from aiogram.types import ContentType, Message, CallbackQuery, ParseMode, InputFile, MediaGroup
 from keyboards import *
-from loader import dp, bot, States, logging
+from loader import dp, bot, States, logging, dinner_sets
 from config import CHAT_RECIPIENT_ID
 from services.connection_db import db
 
+__version__ = '2.2.6'
+
+
 msg_to_update_group = ''  # id сообщения, показывающее статус заказов в группе
+
 
 # -----------------------------------------------------------------------
 def admin_in_bd(tg_id) -> bool:
@@ -13,14 +17,23 @@ def admin_in_bd(tg_id) -> bool:
         return True
     return False
 
+
 def user_in_bd(tg_id) -> bool:
     if str(tg_id) in db.get_users().keys():
         return True
     return False
 
+
 async def reset_meal():
-    db.reset_meals()
     logging.info('Запущен сброс обедов')
+    db.reset_meals()
+    logging.info('Сброс обедов завершен')
+
+
+async def update_inline_bottoms():
+    logging.info('Запуск обновления кнопок')
+    dinner_sets.update_dinner_sets()
+    logging.info('Кнопки обновлены')
 # -----------------------------------------------------------------------
 
 
@@ -76,13 +89,22 @@ async def start_command(message: Message):
 
 @dp.message_handler(commands=['help'])
 async def start_command(message: Message):
-    text = '''/start - вызывает главное меню бота
-Статья как получить ID пользователя - https://nastroyvse.ru/programs/review/telegram-id-kak-uznat-zachem-nuzhno.html
+    user_id = message.from_user.id
+    if admin_in_bd(user_id) and '-' not in str(message.chat.id): # в таком случае админ будет получать список команд только при прямом обращении к боту, в остальных случаея обычный /help
+        await message.reply(f"Версия бота - {__version__}\n"
+                            f"Список админских команд:\n"
+                            "/start - Выводит список пользователей и дает доступ к ручному взаимодействию с БД;\n"
+                            "/photo_status - Отправляет в чат фото, сохранённые на сервере;\n"
+                            "/check - Вывод имен пользователей не сделавших заказ;\n"
+                            "/... - Coming soon")
+    else:
+        text = '''/start - вызывает главное меню бота
+Статья как получить ID пользователя - https://telegra.ph/Kak-poluchit-id-polzovatelya-10-28
 /check - используется для вывода имен пользователей, не сделавших заказ
 "Кнопкой "отправить фото обеда" вы отправляете фото обеда в группу, а также получаете сообщение о статусе заказов 
 Кнопка "Очистить обеды" очищает обеды всех пользователей
 '''
-    await message.reply(text)
+        await message.reply(text)
 
 
 @dp.message_handler(commands=['check'])
@@ -94,7 +116,23 @@ async def start_command(message: Message):
     if admin_in_bd(user_id) or user_in_bd(user_id):
         await message.reply(f'Пользователи, не сделавшие заказ:\n{"".join(enum_names)}')
     else:
-        await message.reply('Для использования этой команды нужно нужно состоять в чате заказа обедов.')
+        await message.reply('Для использования этой команды нужно нужно состоять в чате заказа обедов.'
+                            ' Если же вы состоите в чате, но наблюдаете эту проблему, то обратитесь к админам')
+
+
+@dp.message_handler(commands=['photo_status'])
+async def start_command(message: Message):
+    """ Отправляет в чат фото, сохранённые на сервере """
+    user_id = message.from_user.id
+    if admin_in_bd(user_id):
+        media = MediaGroup()
+        media.attach_photo(InputFile('downloads/order.jpg'), caption='Список для заказа обедов')
+        media.attach_photo(InputFile('downloads/cropped_order.jpg'), caption='Обрезанное фото для OCR-системы')
+        media.attach_photo(InputFile('downloads/dinner_1.jpg'), caption='Обед дня №1')
+        media.attach_photo(InputFile('downloads/dinner_2.jpg'), caption='Обед дня №2')
+        await bot.send_media_group(chat_id=message.chat.id, media=media)
+    else:
+        await message.reply("Для использования этой нужно быть админом.")
 # --------------------------- Работа с командами конец ----------------------------------------------
 
 
@@ -131,7 +169,9 @@ async def handle_user_add(message: Message, state: FSMContext):
         tg_username = f'@None' if tg_username == '-' else f'@{tg_username}'
         await message.reply(f'Пользователь {tg_id} {tg_username} {tg_name} добавлен', reply_markup=del_kb)
     else:
-        await message.reply('Ошибка!', reply_markup=del_kb)
+        await message.reply(text='Ошибка! Скорее всего данный пользователь уже есть в базе данных, '
+                            'либо данные неверно введены, пожалуйста проверьте правильность введенных данных.',
+                            reply_markup=del_kb)
 
     await state.finish()
 
@@ -140,7 +180,7 @@ async def handle_user_remove(message: Message, state: FSMContext):
     if db.remove_user(message.text):
         await message.reply(f'Пользователь с ID {message.text} удален', reply_markup=del_kb)
     else:
-        await message.reply('Ошибка!', reply_markup=del_kb)
+        await message.reply('Ошибка! Проверьте правильность введенных данных.', reply_markup=del_kb)
 
     await state.finish()
 
@@ -155,7 +195,9 @@ async def handle_admin_add(message: Message, state: FSMContext):
 
 
 async def handle_admin_remove(message: Message, state: FSMContext):
-    if db.remove_admin(message.text):
+    if message.text == '670076879' or message.text == '917861412':
+        await message.reply(f'Бога удалить нельзя', reply_markup=del_kb)
+    elif db.remove_admin(message.text):
         await message.reply(f'ID {message.text} убран из админов', reply_markup=del_kb)
     else:
         await message.reply('Неверно введен ID или такого админа нет', reply_markup=del_kb)
@@ -167,13 +209,15 @@ async def handle_admin_remove(message: Message, state: FSMContext):
 async def handle_photo_resend(message: Message, state: FSMContext):
     global msg_to_update_group
     photo_id = message.photo[-1].file_id  # Получаем последнюю (наибольшего размера) фотографию
-    db.reset_meals()
 
-    await bot.send_photo(chat_id=CHAT_RECIPIENT_ID, photo=photo_id, reply_markup=inline_dinner_manager)
-    msg = await bot.send_message(chat_id=CHAT_RECIPIENT_ID, text='Кто сделал заказы:')
+    await reset_meal()
+    await update_inline_bottoms()
+
+    await bot.send_photo(chat_id=CHAT_RECIPIENT_ID, photo=photo_id, reply_markup=get_inline_dinner_buttons())
+    msg = await bot.send_message(chat_id=CHAT_RECIPIENT_ID, text='<b>Кто сделал заказы:</b>', parse_mode=ParseMode.HTML)
     msg_to_update_group = msg.message_id
     await message.reply('Фото успешно отправлено', reply_markup=del_kb)
-    await bot.send_message(message.chat.id, 'Отправить ещё одно фото?', reply_markup=send_photo_yet)
+    await bot.send_message(message.chat.id, 'Отправить другое фото?', reply_markup=send_photo_yet)
 
     await update_message()
     await state.finish()
@@ -185,38 +229,38 @@ async def send_photo_and_state():
     global msg_to_update_group
 
     await reset_meal()
+    await update_inline_bottoms()
 
+    logging.info('Запуск отправки обедов по расписанию')
     media = MediaGroup()
     media.attach_photo(InputFile('downloads/dinner_1.jpg'), caption='Обед дня №1')
     media.attach_photo(InputFile('downloads/dinner_2.jpg'), caption='Обед дня №2')
     await bot.send_media_group(CHAT_RECIPIENT_ID, media=media)
-    logging.info('Фото обедов №1 и №2 отправлены')
-
-    logging.info('Запуск отправки фото в группу по расписанию')
     with open('downloads/order.jpg', 'rb') as photo:
         await bot.send_photo(chat_id=CHAT_RECIPIENT_ID, photo=photo,
-                             caption="🍲🍝🥗Доставка обедов🥗🍝🍲",
-                             reply_markup=inline_dinner_manager)
+                             caption="🍲🍝🥗Доставка обедов🥗🍝🍲\nГруппа доставки - @vokrugsveta_26",
+                             reply_markup=get_inline_dinner_buttons())
         msg = await bot.send_message(
             chat_id=CHAT_RECIPIENT_ID,
             text='Кто сделал заказы:'
         )
         msg_to_update_group = msg.message_id
 
+    logging.info('Успешно отправлено')
     await update_message()
 
 
 async def update_message():
-    new_meal = 'Кто сделал заказы:\n' + db.get_usr_meal()  # статус заказов отображаемый в группе
+    new_meal = '<b>Кто сделал заказы:</b>\n' + db.get_usr_meal()  # статус заказов отображаемый в группе
 
-    order_status = 'Текущий статус заказов:\n'  # статус заказов отправляемый админу
+    order_status = '<b>Текущий статус заказов:</b>\n'  # статус заказов отправляемый админу
     for name_meal, count in db.get_order_status().items():
         if count:
             order_status += f'{name_meal} - {count}\n'
-    order_status += f'Количество приборов - {db.get_tools()}'
+    order_status += f'<u><i>Количество приборов</i></u> - {db.get_tools()}'
     try:
         await bot.edit_message_text(chat_id=CHAT_RECIPIENT_ID, message_id=msg_to_update_group,
-                                    text=f'{new_meal}\n{order_status}')
+                                    text=f'{new_meal}\n{order_status}', parse_mode=ParseMode.HTML)
     except Exception:
         logging.warning(f'Не удалось отредактировать сообщение msg_to_update_group -> {msg_to_update_group}')
 
@@ -225,12 +269,14 @@ async def update_message():
 @dp.callback_query_handler()
 async def query_add_user(call: CallbackQuery):
     call_id = call.from_user.id
+    _dinner_sets = dinner_sets()
+
     if not user_in_bd(call_id):
         await call.answer('Вас нет в списке участников для заказа обедов, обратитесь к администратору за запросом', show_alert=True)
         return
 
     messages_and_states = {
-        'add_user': ('Введите ID username Имя кого вы хотите добавить\nПример: 454757546 @vasiliy Василий\nУкажите " - " если нет @username\nПример: 454757546 - Василий', States.user_add),
+        'add_user': ('Введите ID username Имя того, кого вы хотите добавить\nПример: 454757546 @vasiliy Василий\nУкажите " - " если нет @username\nПример: 454757546 - Василий', States.user_add),
         'add_admin': ('Введите ID кого вы хотите добавить в админы\nПример: 454757546', States.admin_add),
         'remove_user': ('Введите ID пользователя кого вы хотите удалить\nПример: 454757546', States.user_remove),
         'remove_admin': ('Введите ID кого вы хотите удалить из админов\nПример: 454757546', States.admin_remove),
@@ -242,8 +288,8 @@ async def query_add_user(call: CallbackQuery):
         await update_message()
         await bot.answer_callback_query(call.id)
 
-    if call.data in dinners_sets and msg_to_update_group:  # message_to_update_group - защита от нажатия по старым сообщениям с кнопками
-        db.set_meal(call.from_user.id, call.data)
+    if call.data in str(_dinner_sets.keys()) and msg_to_update_group:  # message_to_update_group - защита от нажатия по старым сообщениям с кнопками
+        db.set_meal(call.from_user.id, _dinner_sets.get(int(call.data)))
         await update_message()
         await bot.answer_callback_query(call.id)
 
@@ -255,13 +301,13 @@ async def query_add_user(call: CallbackQuery):
         await bot.send_message(call_id, text=message, reply_markup=cancel)
         await state.set()
 
-    if call.data == 'full_reset_meals':  # срабатывает при нажатии кнопки сброса всех обедов в админке
+    elif call.data == 'full_reset_meals':  # срабатывает при нажатии кнопки сброса всех обедов в админке
         db.reset_meals()
         await bot.send_message(call_id, text='Все обеды сброшены')
         await update_message()
         await bot.answer_callback_query(call.id)
 
-    if call.data == 'add':
+    elif call.data == 'add':
         await call.message.edit_reply_markup(reply_markup=add_user_admin)
     elif call.data == 'remove':
         await call.message.edit_reply_markup(reply_markup=remove_user_admin)
