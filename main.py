@@ -27,7 +27,6 @@ if __name__ == '__main__':
 
         print('[+] Юзербот успешно запущен')
         client.run()
-        bot_thread.join()
     except Exception as error:
         print(error)
     finally:

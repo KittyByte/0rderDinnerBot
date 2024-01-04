@@ -47,8 +47,8 @@
    USERBOT_API_ID = 12345
    USERBOT_API_HASH = 'abc12345'
    
-   # id/имя чата от куда парсится фото
-   CHAT_ID_FOR_PARSING = '@example_tg_group'
+   # id чата от куда парсится фото
+   CHAT_ID_FOR_PARSING = -1001964895000
    ```
 
 5. Перейдите в user_bot.py и измените его под ваши нужды, в нем находится логика парсинга изображений
