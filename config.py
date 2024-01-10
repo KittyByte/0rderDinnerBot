@@ -10,5 +10,5 @@ DAYS_OF_WEEK_TO_SEND = 'mon-fri'
 USERBOT_API_ID = 1234567890
 USERBOT_API_HASH = 'qwerty123456789qwerty'
 
-# id чата от куда парсится фото
+# id/username чата от куда парсится фото
 CHAT_ID_FOR_PARSING = -1001964895000
