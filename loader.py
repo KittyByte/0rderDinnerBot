@@ -14,7 +14,7 @@ log_name = 'logs.log'
 logging.basicConfig(
     filename=log_name,
     filemode='w',
-    format='%(asctime)s.%(msecs)-3d | %(levelname)-7s | %(funcName)-25s | %(message)s',  # -25s это отступы
+    format='[%(asctime)s.%(msecs)-3d] %(filename)s:%(lineno)d #%(levelname)s - %(message)s',  # -25s это отступы
     datefmt='%H:%M:%S',
     level=logging.INFO
 )
@@ -49,7 +49,6 @@ class __DinnerSetsLoader:
         self.dinners_sets: dict = self.__get_dinner_sets()  # тут хранятся значения при первой инициализации класса, для последующего обновления значений необходимо вызывать метод
 
     def __call__(self):
-        logging.info(f'Запрос кнопок')
         return self.dinners_sets
 
     def __get_base_set(self):
@@ -77,7 +76,7 @@ class __DinnerSetsLoader:
 
     def update_dinner_sets(self):
         self.dinners_sets = self.__get_dinner_sets()
-        logging.info(f'Метод выполнен, установленные кнопки - {self.dinners_sets}')
+        logging.info(f'Установленны кнопки - {self.dinners_sets}')
 
 
 dinner_sets = __DinnerSetsLoader()

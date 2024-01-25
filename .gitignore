@@ -3,3 +3,4 @@
 /venv/
 /**/__pycache__
 /**/my_bot.session
+/**/my_bot.session-journal

@@ -33,26 +33,30 @@ class OCR:
         img.save(self.__cropped_image_path)
 
     @staticmethod
-    def __format_text(text):
+    def __format_text(text) -> list:
         def clear(txt: str) -> str:
             symbols: str = punctuation.replace('-', '') + '"”“'
             return re.sub(f"[{symbols}]", "", txt).capitalize().strip()
 
-        lst_meals = [clear(text) for text in text.split('\n') if text and "дня" not in text.lower()]
-        meals = []
-        temp_str = ''
-        for meal in lst_meals:
-            if 'руб' not in meal:
-                temp_str += meal
-            else:
-                meals.append(f'{temp_str} {meal}'[:-7].strip().capitalize())
-                temp_str = ''
-        meals[1], meals[2] = meals[2], meals[1]
-        meals[3], meals[4] = meals[4], meals[3]
-        meals[1], meals[4] = meals[4], meals[1]
+        try:
+            lst_meals = [clear(text) for text in text.split('\n') if text and "дня" not in text.lower()]
+            meals = []
+            temp_str = ''
+            for meal in lst_meals:
+                if 'руб' not in meal:
+                    temp_str += meal
+                else:
+                    meals.append(f'{temp_str} {meal}'[:-7].strip().capitalize())
+                    temp_str = ''
+            meals[1], meals[2] = meals[2], meals[1]
+            meals[3], meals[4] = meals[4], meals[3]
+            meals[1], meals[4] = meals[4], meals[1]
 
-        logging.info(f'Фото обрезано и очищено, получен текст - {meals}')
-        return meals
+            logging.info(f'Фото обрезано и очищено, получен текст - {meals}')
+            return meals
+        except Exception as err:
+            logging.warning(err)
+            return []
 
     def img_to_text(self, path=None) -> list[str]:
         self.__crop_photo(path)

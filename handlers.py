@@ -5,7 +5,7 @@ from loader import dp, bot, States, logging, dinner_sets
 from config import CHAT_RECIPIENT_ID
 from services.connection_db import db
 
-__version__ = '2.2.6'
+__version__ = '2.3'
 
 
 msg_to_update_group = ''  # id сообщения, показывающее статус заказов в группе
@@ -25,15 +25,12 @@ def user_in_bd(tg_id) -> bool:
 
 
 async def reset_meal():
-    logging.info('Запущен сброс обедов')
     db.reset_meals()
-    logging.info('Сброс обедов завершен')
+    logging.info('Обеды сброшены')
 
 
 async def update_inline_bottoms():
-    logging.info('Запуск обновления кнопок')
     dinner_sets.update_dinner_sets()
-    logging.info('Кнопки обновлены')
 # -----------------------------------------------------------------------
 
 
@@ -238,10 +235,7 @@ async def send_photo_and_state():
         await bot.send_photo(chat_id=CHAT_RECIPIENT_ID, photo=photo,
                              caption="🍲🍝🥗Доставка обедов🥗🍝🍲\nГруппа доставки - @vokrugsveta_26",
                              reply_markup=get_inline_dinner_buttons())
-        msg = await bot.send_message(
-            chat_id=CHAT_RECIPIENT_ID,
-            text='Кто сделал заказы:'
-        )
+        msg = await bot.send_message(chat_id=CHAT_RECIPIENT_ID, text='Кто сделал заказы:')
         msg_to_update_group = msg.message_id
 
     logging.info('Успешно отправлено')
